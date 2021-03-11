@@ -1,0 +1,975 @@
+package teamProject;
+
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.GregorianCalendar;
+import java.util.Random;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.JComboBox;
+
+public class Calender extends JFrame implements ActionListener {
+
+   String[] monthname = { "January", "Feburuary", "March", "April", "May", "June", "July", "August", "September",
+         "October", "Nomember", "December" }; //달의 이름들을 스트링 배열로
+
+   JPanel up = new JPanel();
+   JPanel down = new JPanel();
+   JPanel center = new JPanel(); //위 아래 중간에 넣을 패널
+
+   private DayviewFrame dayview; //DayviewFrame class를 선언
+   private DayviewDialog daydia; //DayviewDialog class를 선언
+   public int Month = 6; //이번 달
+   public int Year = 2016; //올해
+   private int Day = 1; // 달의 첫날
+   private static int timetableIndex = 0; //파일을 읽을 때 필요
+
+   
+   public String SelectMonth = ""; 
+   public String SelectDay = ""; //다른 클래스에서 쓸 변수들이다
+   public JButton[] buttemp = new JButton[42]; //달력에 넣을 버튼들이다
+   
+   JLabel mon = new JLabel("Mon", JLabel.CENTER);
+   JLabel tue = new JLabel("Tue", JLabel.CENTER);
+   JLabel wed = new JLabel("Wed", JLabel.CENTER);
+   JLabel thu = new JLabel("Thu", JLabel.CENTER);
+   JLabel fri = new JLabel("Fri", JLabel.CENTER);
+   JLabel sat = new JLabel("Sat", JLabel.CENTER);
+   JLabel sun = new JLabel("Sun", JLabel.CENTER); //각 요일의 라벨
+
+   GregorianCalendar cal = new GregorianCalendar(Year, Month - 1, 1);
+   //GregorianCalendar(년도,달-1,1)로 클래스 선언
+   int numberDayInMonth = cal.getActualMaximum(GregorianCalendar.DAY_OF_MONTH);
+   //해당하는 달의 마지막날을 구할 수 있다
+   int firstDayOfTheWeek = cal.get(GregorianCalendar.DAY_OF_WEEK);
+   // 첫날의 요일을 숫자를 통해 알 수 있다.
+
+   private JComboBox comboBox = new JComboBox(monthname);
+   private JComboBox comboBox_1 = new JComboBox();
+   //ppt에서는  버튼과 라벨로 달력을 넘길 수 있었지만 우리는 combobox로 해보기로 했다.
+   public ArrayList<String> yeararray = new ArrayList<String>();
+   //연도 arraylist
+   public Calender() {
+      
+      comboBox.setSize(50, 5);
+      comboBox.setSelectedItem(monthname[Month - 1]);
+      // 달의 이름들을 선택
+      for (int i = 2000; i <= 2100; i++) {
+         yeararray.add(String.valueOf(i));
+      } //연도 arraylist에 2000~2100년까지 추가
+      comboBox_1 = new JComboBox(yeararray.toArray(new String[yeararray.size()]));
+      comboBox_1.setSelectedIndex(Year - 2000);
+      //연도를 선택
+
+      this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      this.setTitle("Calendars");
+      getContentPane().setLayout(new BorderLayout());//borderLayout 사용
+      for (int i = 0; i < 42; i++) {
+         buttemp[i] = new JButton("");//버튼 초기화
+         buttemp[i].setVerticalAlignment(JButton.TOP);
+         buttemp[i].setHorizontalAlignment(JButton.RIGHT); //달력의 숫자를 오른쪽 위로 하기 위해
+         if (i < firstDayOfTheWeek - 1 || i > firstDayOfTheWeek + numberDayInMonth - 2){
+         // GregorianCalendar에서 선언한 firstDayOfTheWeek와 numberDayInMonth 이용하여 버튼달력배열을 만들 수 있다.
+            buttemp[i].setText("");
+            buttemp[i].setEnabled(false);
+         } else {
+            buttemp[i].setText(String.valueOf(Day));
+            Day++;
+         }
+         if (i % 7 == 0) { //일요일은 빨갛게
+            buttemp[i].setBackground(Color.red.brighter());
+         }
+         buttemp[i].addActionListener(this);
+      }
+
+      sun.setForeground(Color.RED);
+      center.add(sun);
+      center.add(mon);
+      center.add(tue);
+      center.add(wed);
+      center.add(thu);
+      center.add(fri);
+      center.add(sat); //라벨을 위에 넣음
+      
+      for (int i = 0; i < 42; i++) { //버튼을 패널안에다 넣음
+         center.add(buttemp[i]);
+        }
+
+      getContentPane().add(up, BorderLayout.NORTH);
+      getContentPane().add(down, BorderLayout.SOUTH);
+      getContentPane().add(center, BorderLayout.CENTER); //패널을 위 가운데 아래에 넣음
+
+      center.setLayout(new GridLayout(7, 7)); //GridLayout으로 달력모양 만들기
+      up.setLayout(new GridLayout(1, 2));
+
+      comboBox.addActionListener(new ActionListener() {
+         //combobox의 actionlistener를 통해 combobox(달) handling
+         public void actionPerformed(ActionEvent e) {//event가 발생 
+            Month = comboBox.getSelectedIndex() + 1; //Month를 설정
+            cal.set(Year, Month - 1, 1);
+
+            numberDayInMonth = cal.getActualMaximum(GregorianCalendar.DAY_OF_MONTH);
+            firstDayOfTheWeek = cal.get(GregorianCalendar.DAY_OF_WEEK);
+          //GregorianCalendar를 새롭게 초기화
+
+            Day = 1;
+
+            for (int i = 0; i < 42; i++) {
+               if (i < firstDayOfTheWeek - 1 || i > firstDayOfTheWeek + numberDayInMonth - 2) {
+                  buttemp[i].setText("");
+                  buttemp[i].setEnabled(false); //버튼 기능 상실
+               } else {
+                  buttemp[i].setEnabled(true);
+                  buttemp[i].setText("" + Day);
+                  Day++;
+               } //버튼 1일씩 증가하면서 달력처럼 만듬
+            }
+         }
+      });
+
+      comboBox_1.addActionListener(new ActionListener() {
+       //combobox의 actionlistener를 통해 combobox_1(연도) handling
+         public void actionPerformed(ActionEvent e) { //event발생
+
+            Year = Integer.parseInt(String.valueOf(comboBox_1.getSelectedItem()));
+            cal.set(Year, Month - 1, 1);
+
+            numberDayInMonth = cal.getActualMaximum(GregorianCalendar.DAY_OF_MONTH);
+            firstDayOfTheWeek = cal.get(GregorianCalendar.DAY_OF_WEEK);
+          //GregorianCalendar를 새롭게 초기화
+
+            Day = 1;
+
+            for (int i = 0; i < 42; i++) {
+               if (i < firstDayOfTheWeek - 1 || i > firstDayOfTheWeek + numberDayInMonth - 2) {
+                  buttemp[i].setText("");
+                  buttemp[i].setEnabled(false);
+               } else {
+                  buttemp[i].setEnabled(true);
+                  buttemp[i].setText("" + Day);
+                  Day++;
+               }
+            }
+         }
+      });
+
+      up.add(comboBox);
+      up.add(comboBox_1); //콤보박스를 넣음
+
+      this.setVisible(true);
+      this.setSize(500, 500);
+   }
+
+   public void actionPerformed(ActionEvent e) {
+      String s = e.getActionCommand();//버튼의 actioncommand를 얻음
+
+      if (s.compareToIgnoreCase("0") >= 0 && s.compareToIgnoreCase("99") <= 0) {
+         //compareToIgnoreCase로 두자리수의 text를 가진 버튼들을 활성화
+         SelectDay = s; 
+         SelectMonth = monthname[Month - 1];//다른 클래스에 쓸 변수 저장
+         dayview = new DayviewFrame(Calender.this, daydia); //DayviewFrame생성
+         dayview.setVisible(true);
+      }
+      try {
+            FileWriter fw = new FileWriter("ToDo.txt", true);//파일 생성
+            BufferedWriter bw = new BufferedWriter(fw); //파일에 적음
+            FileReader fr;
+            fr = new FileReader("ToDo.txt");
+            BufferedReader br = new BufferedReader(fr); //파일 읽음
+            String sCurrentLine; //현재 라인을 나타냄
+
+            while ((sCurrentLine = br.readLine()) != null) { //파일을 라인마다 읽음
+               Object[] inputStr = new Object[4];
+               String[] Str = sCurrentLine.split("[;]");//;로 데이터를 나눠 가져옴
+
+               if (Str[0].equals(String.valueOf(this.Year + "_" + this.SelectMonth + "_" + this.SelectDay))) {
+                  boolean checkval = false; 
+                  System.out.println(Str[1]);
+                  if (Str[1].equals("true")) {
+                     checkval = true; //DayviewFrame 체크박스 핸들링
+                  }
+                  inputStr[0] = checkval; //체크박스 상태
+                  inputStr[1] = Str[2]; //시간대
+                  inputStr[2] = Str[3]; //일
+                  dayview.defaultTableModel.addRow(inputStr);
+                  //테이블모델에 넣음
+                  
+                  for(int i =0 ;i<42;i++){
+                  if(buttemp[i].getText()==this.SelectDay){
+                     buttemp[i].setText("<html>"+buttemp[i].getText()+"<br/>"+inputStr[2]+"</html>");
+                  }
+               } //일이 버튼을 누를때 달력의 버튼에 나타남
+                  
+                  String[] Time = Str[2].split("[:]"); 
+                  String[] FromTime = Time[0].split("[.]");
+                  String[] ToTime = Time[1].split("[.]");
+                  //시간대를 :와 .으로 나눔
+                  
+                  int inputFromHour, inputToHour;
+                  inputFromHour = Integer.parseInt(FromTime[0]);//시작 hour
+                  inputToHour = Integer.parseInt(ToTime[0]); //끝 hour
+                  int inputFromMinute, inputToMinute; 
+                  inputFromMinute = Integer.parseInt(FromTime[1]); //시작 minute
+                  inputToMinute = Integer.parseInt(ToTime[1]); //끝minute
+
+                  dayview.timetable[timetableIndex].setBounds(70 * timetableIndex, inputFromHour * 60 + inputFromMinute,
+                        70, (inputToHour - inputFromHour) * 60 + inputToMinute - inputFromMinute);
+                  //setBounds를 통해 시간표 막대의 위치 지정
+
+                  dayview.timetable[timetableIndex].setText(Str[3]);
+                  Random random = new Random();
+                  int t = random.nextInt(15) % 5;
+                  int[] temp = new int[5];
+                  for (int j = 0; j < 5; j++) {
+                     temp[j] = j;
+                  }
+                  if (temp[t] == 0) { //색깔을 랜덤으로 설정하여 시간표 막대의 background color가 됨
+                     dayview.timetable[timetableIndex].setBackground(Color.cyan);
+                  } else if (temp[t] == 1) {
+                     dayview.timetable[timetableIndex].setBackground(Color.pink);
+                  } else if (temp[t] == 2) {
+                     dayview.timetable[timetableIndex].setBackground(Color.yellow);
+                  } else if (temp[t] == 3) {
+                     dayview.timetable[timetableIndex].setBackground(Color.gray.brighter());
+                  } else if (temp[t] == 4) {
+                     dayview.timetable[timetableIndex].setBackground(Color.orange);
+                  }
+                  dayview.layeredPane.add(dayview.timetable[timetableIndex], 1, -1);
+                  //layeredPane위에 시간표막대를 추가. 1은 위에 있는 정도
+                  //다른 클래스에서 table이 0으로 설정되어 테이블위에 올라옴
+
+                  timetableIndex = timetableIndex + 1;
+
+               }
+
+            }
+         } catch (FileNotFoundException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();//file을 찾지 못했을때,쓰지 못했을때
+         } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace(); //읽어들이는거에 실패할때
+         }
+
+   }
+
+   DefaultTableCellRenderer dcr = new DefaultTableCellRenderer() { 
+      //테이블에 체크박스를 넣기 위한 메소드
+      public Component getTableCellRendererComponent // 셀렌더러
+      (JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+         JCheckBox box = new JCheckBox();
+         box.setSelected(((Boolean) value).booleanValue());
+         box.setHorizontalAlignment(JLabel.CENTER);
+         return box;
+      }
+   };
+
+   public static void main(String[] args) {
+      Calender cd = new Calender(); //생성자 발동
+   }
+}
+
+
+
+
+
+
+package teamProject;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.Random;
+
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
+
+public class DayviewDialog extends JDialog implements ActionListener {
+// 다이얼로그 -> DayviewFrame 에서 Add 와 Edit 을 눌렀을 때, 일정에 추가시키거나 수정시키는 다이얼로그 
+   private final JPanel contentPanel = new JPanel();
+   private JLabel lblNewLabel;
+   public JTextField textEvent;
+   public JTextField textFrom;
+   public JTextField textTo;
+   private Calender cal;
+   private DayviewFrame dvf;
+
+   public String strEvent;
+   public String strTo;
+   public String strFrom;
+   private JLabel lblNewLabel_3;
+   public Object[] inputStr = new Object[3];
+
+   private static int timetableIndex = 0;
+   private static int totaloverlapcount = 0;
+
+   public DayviewDialog(final Calender cal, final DayviewFrame dvf) {
+
+      this.cal = cal;
+      this.dvf = dvf;	// 다른 클래스 내의 메소드를 이용하기 위함
+      setTitle(cal.SelectMonth + " - " + cal.SelectDay); //제목 : 달 - 일
+      setBounds(100, 100, 300, 300);// 다이얼로그 크기 지정
+      setDefaultCloseOperation(HIDE_ON_CLOSE);
+      getContentPane().setLayout(new BorderLayout());
+      contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+      getContentPane().add(contentPanel, BorderLayout.CENTER);
+      contentPanel.setLayout(null);// contentPanel 설정
+
+      lblNewLabel = new JLabel("Event"); // Event lable 추가하여 각 텍스트 필드창 구별
+      lblNewLabel.setBounds(12, 56, 40, 15);
+      contentPanel.add(lblNewLabel); 
+      {
+         JLabel lblNewLabel_1 = new JLabel("From");// From lable 추가하여 각 텍스트 필드창 구별
+         lblNewLabel_1.setBounds(12, 93, 40, 15);
+         contentPanel.add(lblNewLabel_1);	
+      }
+      {
+         JLabel lblNewLabel_2 = new JLabel("To");// To lable 추가하여 각 텍스트 필드창 구별
+         lblNewLabel_2.setBounds(12, 132, 40, 15);
+         contentPanel.add(lblNewLabel_2); // 일정 끝나는 시간 입력창
+      }
+
+      textEvent = new JTextField();
+      textEvent.setBounds(53, 53, 200, 21);
+      contentPanel.add(textEvent);
+      textEvent.setColumns(10);
+   // event 일정내용을  입력하는 textfield 창 생성
+
+      textFrom = new JTextField();
+      textFrom.setBounds(53, 90, 200, 21);
+      contentPanel.add(textFrom);
+      textFrom.setColumns(10);
+   // 일정 시작 시간을  입력하는 textfield 창 생성
+      
+      textTo = new JTextField();
+      textTo.setBounds(53, 129, 200, 21);
+      contentPanel.add(textTo);
+      textTo.setColumns(10);
+   // 일정 끝나는 시간을  입력하는 textfield 창 생성
+      
+      lblNewLabel_3 = new JLabel("Please input time xx.xx"); // Lable 창을 통해서 시간을 입력하는 형식을 알려준다.
+      lblNewLabel_3.setBounds(12, 183, 189, 15);
+      contentPanel.add(lblNewLabel_3);
+      {
+         JPanel buttonPane = new JPanel();	// buttons 들을 모아넣을 panel 생성 OK 버튼과 Cancel버튼이 있다.
+         buttonPane.setLayout(new FlowLayout(FlowLayout.CENTER)); // FlowLayout 설정(버튼을 가운데로)
+         getContentPane().add(buttonPane, BorderLayout.SOUTH); // contentPanel 아래에 buttonpanel 넣기
+         {
+            JButton okButton = new JButton("OK");// OK 버튼 생성
+            okButton.addActionListener(this); // addActionListener를 통해서 ok button handling
+            okButton.setActionCommand("OK"); //액션 커맨드 설정
+            buttonPane.add(okButton);// 패널에 버튼 추가
+            getRootPane().setDefaultButton(okButton);
+         }
+         {
+            JButton cancelButton = new JButton("Cancel");// Cancel 버튼 생성
+            cancelButton.addActionListener(new ActionListener() {// addActionListener를 통해서 Cancel button handling
+               public void actionPerformed(ActionEvent e) { 
+                  setVisible(false);	//다이알로그를 없애준다.
+               }
+            });
+            cancelButton.setActionCommand("Cancel");//액션 커맨드 설정
+            buttonPane.add(cancelButton);// 패널에 버튼 추가
+         }
+      }
+
+   }
+
+   DefaultTableCellRenderer dcr = new DefaultTableCellRenderer() {// table 내에서 checkbox를 다루는데 사용
+	      public Component getTableCellRendererComponent // 셀렌더러, table내에서 사용자가 원하는 cell에 component를 넣는다.
+	      (JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+	         JCheckBox box = new JCheckBox(); // checkbox 생성
+	         box.setSelected(((Boolean) value).booleanValue());
+	         box.setHorizontalAlignment(JLabel.CENTER);// 가운데 배열
+	         return box;	
+	      }
+	   };
+
+   public class NotEventException extends Exception {
+
+   }
+
+   public class TimeCollideException extends Exception {
+
+   }
+
+   public class TimeOverException extends Exception {
+
+   }
+
+   public class NoInputException extends Exception {
+
+   }//exeption handling
+
+   public void actionPerformed(ActionEvent e) {
+      // TODO Auto-generated method stub
+      String s = e.getActionCommand();
+      
+      {
+         strEvent = textEvent.getText();// 일정 내용을 입력한 event 텍스트필드창에 입력한 문자를 copy
+         strFrom = textFrom.getText();//시작시간 입력하는 텍스트필드창에 입력한 문자를 copy
+         strTo = textTo.getText();//끝나는 시간 입력하는 텍스트필드창에 입력한 문자를 copy
+         String[] FromTime = textFrom.getText().split("[.]");// 시작시간의 시각 과 분 부분을 분리하여 저장
+         String[] ToTime = textTo.getText().split("[.]");// 끝나는 시간의 시각 과 분 부분을 분리하여 저장
+
+         try {
+            if (textEvent.getText() == "" || textFrom.getText() == "" || textTo.getText() == "") {
+               throw new NotEventException();
+            }
+            if ((Integer.parseInt(FromTime[0]) > Integer.parseInt(ToTime[0]))
+                  || ((Integer.parseInt(FromTime[0]) == Integer.parseInt(ToTime[0]))
+                        && (Integer.parseInt(FromTime[1]) > Integer.parseInt(ToTime[1])))) {
+               throw new TimeCollideException();//시작시간이 끝나는 시간보다 나중일때 예외처리
+            }
+
+            if (Integer.parseInt(FromTime[0]) > 24 || Integer.parseInt(ToTime[0]) > 24
+                  || Integer.parseInt(FromTime[1]) > 60 || Integer.parseInt(ToTime[1]) > 60) {
+               throw new TimeOverException(); // 시간의 형식이 맞지 않을 때 exeption처리
+            }
+            if (strEvent == null || strFrom == null || strTo == null) {
+               throw new NoInputException();
+            }// 각각의 exeption 처리
+
+            inputStr[1] = strFrom + ":" + strTo;//시작하는 시간과 끝나는 시간을 :로 구분한 String type의 변수를 Object[] 객체에 저장
+            inputStr[2] = strEvent;// event를 담은  String type의 변수를 Object[] 객체에 저장
+
+            if (dvf.buttonname == "Add") {//일정 추가 버튼
+               inputStr[0] = false;//check 박스의 값을 false로 저장
+               dvf.defaultTableModel.addRow(inputStr); //defaultTableModel을 이용해 table 에 내용 저장 
+
+               try {
+                  FileWriter fw = new FileWriter("ToDo.txt", true);
+                  BufferedWriter bw = new BufferedWriter(fw);//파일 입력 쓰기용, append 모드로 열기
+                  bw.write(String.valueOf(cal.Year) + "_" + cal.SelectMonth + "_" + cal.SelectDay + ";"
+                        + inputStr[0] + ";" + inputStr[1] + ";" + inputStr[2] + "\n");            
+                  // 구분기호 ;
+                  // 년도_월_일;완료여부;시간:시간;할일\n 을 파일에 입력한다.
+                  bw.flush();//버퍼를 비운다.
+                  bw.close();//파일 버퍼 닫기
+
+               } catch (Exception e1) {
+                  e1.printStackTrace();// 예외처리 출력
+               }
+
+               int inputFromHour, inputToHour;
+               inputFromHour = Integer.parseInt(FromTime[0]);
+               inputToHour = Integer.parseInt(ToTime[0]);
+               int inputFromMinute, inputToMinute;
+               inputFromMinute = Integer.parseInt(FromTime[1]);
+               inputToMinute = Integer.parseInt(ToTime[1]);
+               //시간에서 시각과 분을 인트형으로 저장
+              
+               dvf.timetable[timetableIndex].setBounds(70 * timetableIndex, inputFromHour * 60 + inputFromMinute,
+                     70, (inputToHour - inputFromHour) * 60 + inputToMinute - inputFromMinute);
+
+               dvf.timetable[timetableIndex].setText(strEvent);
+               Random random = new Random();
+               int t = random.nextInt(15) % 5;
+               int[] temp = new int[5];
+               for (int j = 0; j < 5; j++) {
+                  temp[j] = j;
+               }         
+               if (temp[t] == 0) {
+                  dvf.timetable[timetableIndex].setBackground(Color.cyan);
+               } else if (temp[t] == 1) {
+                  dvf.timetable[timetableIndex].setBackground(Color.pink);
+               } else if (temp[t] == 2) {
+                  dvf.timetable[timetableIndex].setBackground(Color.yellow);
+               } else if (temp[t] == 3) {
+                  dvf.timetable[timetableIndex].setBackground(Color.gray.brighter());
+               } else if (temp[t] == 4) {
+                  dvf.timetable[timetableIndex].setBackground(Color.orange);
+               }
+               dvf.layeredPane.add(dvf.timetable[timetableIndex], 1, -1);
+               //layeredpanel에 시간표 막대를 추가, 1은 위에 있는 정도  
+               timetableIndex = timetableIndex + 1;
+               setVisible(false);
+                
+            } else if (dvf.buttonname == "Edit") {//눌러진 버튼이 Edit 일때
+               try {
+
+                  FileReader fr = new FileReader("ToDo.txt");// 파일 읽기용으로 열기
+                  BufferedReader br = new BufferedReader(fr);
+                  String sCurrentLine;// 현재 라인
+                  String dummy = "";//파일에서 내용을 받아 줄 string 변수 생성
+                  while ((sCurrentLine = br.readLine()) != null) {// 파일에서 한 줄을 받아 준다// 끝까기 갈때까지 계속 반복
+
+                     String[] Str = sCurrentLine.split("[;]");// 구분문자 ; 로 나누어 저장
+                     if (Str[0].equals(String.valueOf(cal.Year + "_" + cal.SelectMonth + "_" + cal.SelectDay))
+                           && Str[2].equals(dvf.table.getValueAt(dvf.table.getSelectedRow(), 1))
+                           && Str[3].equals(dvf.table.getValueAt(dvf.table.getSelectedRow(), 2))) {
+                        dummy += String.valueOf(cal.Year) + "_" + cal.SelectMonth + "_" + cal.SelectDay + ";"
+                              + inputStr[0] + ";" + inputStr[1] + ";" + inputStr[2] + "\n";
+                     }//일정 내용이 일치하면 수정할 내용을 바꿔서 파일에 저장
+                     else {
+                        dummy += sCurrentLine + "\n"; // 나머지는 그대로 저장
+                     }
+
+                  }
+
+                  FileWriter fw = new FileWriter("ToDo.txt"); // 쓰기용으로 파일을 열기
+                  BufferedWriter bw = new BufferedWriter(fw);
+                  bw.write(dummy); // 수저된 내용을 파일에 저장
+                  // 구분기호 ;
+                  // [년도_월_일];완료여부;시간:시간;할일\n
+                  bw.flush();
+                  bw.close();
+
+                  br.close();
+
+                  dvf.defaultTableModel.setValueAt(inputStr[1], dvf.row, 1);
+                  dvf.defaultTableModel.setValueAt(inputStr[2], dvf.row, 2);
+                  dvf.timetable[dvf.row].setText(strEvent);
+
+                  int inputFromHour, inputToHour;
+                  inputFromHour = Integer.parseInt(FromTime[0]);
+                  inputToHour = Integer.parseInt(ToTime[0]);
+                  int inputFromMinute, inputToMinute;
+                  inputFromMinute = Integer.parseInt(FromTime[1]);
+                  inputToMinute = Integer.parseInt(ToTime[1]);
+
+                  dvf.timetable[dvf.row].setBounds(70 * dvf.row, inputFromHour * 60 + inputFromMinute, 70,
+                        (inputToHour - inputFromHour) * 60 + inputToMinute - inputFromMinute);
+               } catch (Exception e1) {
+                  e1.printStackTrace();
+               }
+               dvf.table.revalidate();
+               dvf.scrollPane_1.setViewportView(dvf.table);
+               // 시간표의 막대를 수정된 내용에 맞게 다시 그린다.
+               setVisible(false);
+
+            }
+         } catch (NotEventException ee) {
+            JOptionPane.showMessageDialog(null, "input Event or Time", "time trouble", JOptionPane.ERROR_MESSAGE);
+         } catch (TimeCollideException ee) {
+            JOptionPane.showMessageDialog(null, "time is invalid", "time trouble", JOptionPane.ERROR_MESSAGE);
+         } catch (TimeOverException ee) {
+            JOptionPane.showMessageDialog(null, "time is over", "time trouble", JOptionPane.ERROR_MESSAGE);
+         } catch (NoInputException ee) {
+            JOptionPane.showMessageDialog(null, "input event or time", "No input", JOptionPane.ERROR_MESSAGE);
+         } catch (Exception ee) {
+            JOptionPane.showMessageDialog(null, "input as right way", "input error", JOptionPane.ERROR_MESSAGE);
+         }// 각각의 예외 처리
+
+      }
+      
+   }
+
+}
+
+
+
+
+
+package teamProject;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+
+import javax.swing.DefaultCellEditor;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.ScrollPaneConstants;
+
+public class DayviewFrame extends JFrame {
+
+	private Calender cal; //Calender클래스
+	   private DayviewDialog dvd; 
+	   private DayviewDialog DayDlg; //DayviewDialog설정
+
+	   private JPanel contentPane;
+	   private JScrollPane scrollPane; //스크롤바
+	   private JPanel panel;
+	   private JButton btnAdd;
+	   private JButton btnEdit;
+	   private JButton btnDelete;
+	   private JButton btnSave; //버튼들
+
+	   public JTable table;
+	   private String header[] = { "Complete", "Time", "To do" }; //table헤더
+	   private Object schedule[][] = {}; //스케줄
+	   private JCheckBox box;
+	   public int row; //table의 row값
+
+	   private JSplitPane splitPane; //테이블 나누기 위해
+	   public JTable table_2; //실행시켜보면 왼쪽테이블 중 시간대가 나오는 테이블
+	   public JLayeredPane layeredPane; //시간표를 그리기 위해
+	   public JTable table_3; //시간표가 그려지는 테이블
+	   public JButton[] timetable = new JButton[100]; //버튼 100개 정도 설정
+
+	   public DefaultTableModel defaultTableModel = new DefaultTableModel(schedule, header);
+	   //테이블 모델 설정
+	   final JScrollPane scrollPane_1 = new JScrollPane(table); //스크롤에 테이블 넣음
+
+	   public String buttonname;//버튼이름에 따라 다른 기능 실행
+
+	   public DayviewFrame(final Calender cal, final DayviewDialog dvd) {
+	      for (int i = 0; i < 100; i++) {
+	         timetable[i] = new JButton();
+	         timetable[i].setFont(new Font("바탕체", Font.BOLD, 9));
+	      } //버튼의 text설정
+
+	      this.cal = cal;
+	      this.dvd = dvd; //다른 클래스의 필드와 메소드를 사용하기 위함
+	      setTitle(cal.SelectMonth + " - " + cal.SelectDay);
+	      setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+	      setBounds(100, 100, 660, 457);
+	      contentPane = new JPanel();
+	      contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+	      setContentPane(contentPane);
+	      contentPane.setLayout(null);
+
+	      scrollPane = new JScrollPane();
+	      scrollPane.setBounds(0, 10, 335, 399);
+	      contentPane.add(scrollPane);//패널에 스크롤바
+
+	      splitPane = new JSplitPane();
+	      splitPane.setDividerSize(1);
+	      scrollPane.setViewportView(splitPane);
+	      //스크롤바에 splitpane넣음
+
+	      table_2 = new JTable();
+
+	      table_2.setRowHeight(60);
+	      table_2.setModel(
+	            new DefaultTableModel( //테이블 시간대 설정
+	                  new Object[][] { { "00.00" }, { "01.00" }, { "02.00" }, { "03.00" }, { "04.00" }, { "05.00" },
+	                        { "06.00" }, { "07.00" }, { "08.00" }, { "09.00" }, { "10.00" }, { "11.00" },
+	                        { "12.00" }, { "13.00" }, { "14.00" }, { "15.00" }, { "16.00" }, { "17.00" },
+	                        { "18.00" }, { "19.00" }, { "20.00" }, { "21.00" }, { "22.00" }, { "23.00" }, },
+	                  new String[] { "New column" }));
+	      table_2.getColumnModel().getColumn(0).setPreferredWidth(60);
+	      splitPane.setLeftComponent(table_2); //splitpane의 왼쪽에 시간대table 넣음
+
+	      layeredPane = new JLayeredPane();//JLayeredPane초기화
+	      layeredPane.setLayout(null);
+
+	      splitPane.setRightComponent(layeredPane); //splitPane오른쪽에 layeredPane넣음
+
+	      table_3 = new JTable();
+	      table_3.setShowVerticalLines(false);
+	      table_3.setModel(new DefaultTableModel( //시간대 테이블 초기화
+	            new Object[][] { { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null },
+	                  { null, null, null, null }, { null, null, null, null }, { null, null, null, null }, },
+	            new String[] { "New column", "New column", "New column", "New column" }));
+	      table_3.setRowHeight(30);
+	      table_3.setBounds(0, 0, 280, 1440);
+
+	      layeredPane.add(table_3, 0, -1);//layeredPane에 시간표 테이블 넣음
+
+	      panel = new JPanel();
+	      panel.setBounds(335, 10, 309, 399);
+	      contentPane.add(panel);
+	      panel.setLayout(null);
+
+	      table = new JTable(defaultTableModel); //일의 체크, 시간대, 일의 내용이 나와있는 테이블
+	      scrollPane_1.setViewportView(table);
+	      table.getColumn("Complete").setCellRenderer(dcr);//셀 런더사용
+	      table.getRowSelectionAllowed();
+
+	      box = new JCheckBox();
+	      box.setHorizontalAlignment(JLabel.CENTER); 
+	      box.addActionListener(new ActionListener() {
+
+	         @Override
+	         public void actionPerformed(ActionEvent e) {
+	            // TODO Auto-generated method stub
+	            if (box.isSelected() == true) { //체크박스 의 핸들링
+	               JOptionPane.showMessageDialog(null, "Congratulaion! You finish plan!");
+	               try {
+	                  FileReader fr = new FileReader("ToDo.txt"); //파일읽음
+	                  BufferedReader br = new BufferedReader(fr);
+	                  String sCurrentLine;
+	                  String dummy = ""; //파일내용을 가져올 변수
+	                  // DayDlg.inputStr[0]=box.isSelected():
+	                  while ((sCurrentLine = br.readLine()) != null) {//라인을 계속 읽음
+	                     String[] Str = sCurrentLine.split("[;]"); //;로 나눔
+
+	                     if (Str[0].equals(String.valueOf(cal.Year + "_" + cal.SelectMonth + "_" + cal.SelectDay))
+	                           && Str[2].equals(table.getValueAt(table.getSelectedRow(), 1))
+	                           && Str[3].equals(table.getValueAt(table.getSelectedRow(), 2))) {//내용이 맞으면
+	                        dummy += String.valueOf(cal.Year) + "_" + cal.SelectMonth + "_" + cal.SelectDay + ";"
+	                              + DayDlg.inputStr[0] + ";" + DayDlg.inputStr[1] + ";" + DayDlg.inputStr[2]
+	                              + "\n";
+	                        //더미에 위의 형태로 내용을 저장
+	                     } else {
+	                        dummy += sCurrentLine + "\n"; //더미에 현재 라인을 저장
+	                     }
+
+	                  }
+
+	                  FileWriter fw = new FileWriter("ToDo.txt"); //파일 씀
+	                  BufferedWriter bw = new BufferedWriter(fw); 
+	                  bw.write(dummy);
+	                  // 구분기호 ;
+	                  // [년도_월_일];완료여부;시간:시간;할일\n
+	                  bw.flush(); //버퍼를 비운다
+	                  bw.close(); 
+
+	                  br.close(); //모두 담음
+
+	               } catch (Exception e1) {//예외처리
+	                  e1.printStackTrace();
+	               }
+
+	            } else if (box.isSelected() == false) {//선택되지 않을때
+
+	               try {
+
+	                  FileReader fr = new FileReader("ToDo.txt");
+	                  BufferedReader br = new BufferedReader(fr); //파일읽음
+	                  String sCurrentLine;
+	                  String dummy = "";
+	                  DayDlg.inputStr[0] = box.isSelected(); //박스선택형 변수
+	                  while ((sCurrentLine = br.readLine()) != null) {//파일읽음 
+	                     String[] Str = sCurrentLine.split("[;]");
+
+	                     if (Str[0].equals(String.valueOf(cal.Year + "_" + cal.SelectMonth + "_" + cal.SelectDay))
+	                           && Str[2].equals(table.getValueAt(table.getSelectedRow(), 1))
+	                           && Str[3].equals(table.getValueAt(table.getSelectedRow(), 2))) 
+	                     { //내용이 맞으면
+	                        dummy += String.valueOf(cal.Year) + "_" + cal.SelectMonth + "_" + cal.SelectDay + ";"
+	                              + DayDlg.inputStr[0] + ";" + DayDlg.inputStr[1] + ";" + DayDlg.inputStr[2]
+	                              + "\n"; //다음과 같이 저장
+	                     } else {
+	                        dummy += sCurrentLine + "\n"; //더미에 라인을 저장
+	                     }
+
+	                  }
+
+	                  FileWriter fw = new FileWriter("ToDo.txt");
+	                  BufferedWriter bw = new BufferedWriter(fw);
+	                  bw.write(dummy);
+	                  // 구분기호 ;
+	                  // [년도_월_일];완료여부;시간:시간;할일\n
+	                  bw.flush();//버퍼를 비움
+	                  bw.close();
+
+	                  br.close();//닫음
+
+	               } catch (Exception e1) { //예외처리
+	                  e1.printStackTrace();
+	               }
+
+	            }
+	         }
+
+	      });
+	      table.getColumn("Complete").setCellEditor(new DefaultCellEditor(box));
+	      //일을 체크할 때 필요한 체크박스 헤더
+	      btnAdd = new JButton("Add");//ADD버튼
+	      btnAdd.addActionListener(new ActionListener() {//누를때
+	         public void actionPerformed(ActionEvent arg0) {
+	            buttonname = btnAdd.getActionCommand();//버튼 이름을 얻음
+	            DayDlg = new DayviewDialog(cal, DayviewFrame.this);//DayviewDialog 생성
+	            DayDlg.setVisible(true);
+	         }
+	      });
+
+	      btnAdd.setBounds(44, 10, 90, 40);
+	      panel.add(btnAdd);//패널에 버튼넣음
+
+	      btnEdit = new JButton("Edit"); //Edit버튼
+	      btnEdit.addActionListener(new ActionListener() {//불렀을때
+	         public void actionPerformed(ActionEvent e) {
+	            try {
+	               if (table.isRowSelected(table.getSelectedRow()) == false) {
+	                  throw new DoNotSelectException();
+	                  //테이블의 내용을 선택하지 않았을때 예외처리 작용
+	               }
+	               DayDlg = new DayviewDialog(cal, DayviewFrame.this);//DayviewDialog생성
+	               DayDlg.setVisible(true);
+	               row = table.getSelectedRow();
+	               buttonname = btnEdit.getActionCommand(); //버튼 이름을 얻음
+	               DayDlg.textEvent.setText(String.valueOf(table.getValueAt(row, 2)));
+	               //수정할 event를 가져옴 
+	               String[] divideTime = String.valueOf(table.getValueAt(row, 1)).split("[:]");
+	               //수정할 시간대를 가져옴
+	               DayDlg.textFrom.setText(divideTime[0]);
+	               DayDlg.textTo.setText(divideTime[1]);
+	            } catch (DoNotSelectException ee) {
+	               JOptionPane.showMessageDialog(null, "select event", "do not be selected",
+	                     JOptionPane.ERROR_MESSAGE); //예외처리
+	            }
+         }
+      });
+      btnEdit.setBounds(170, 10, 90, 40);
+      panel.add(btnEdit);// Edit 버튼을 panel 에 넛는다
+
+      btnDelete = new JButton("delete");// 삭제버튼 생성
+      btnDelete.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+
+            try {
+               if (table.isRowSelected(table.getSelectedRow()) == false) {// 선택된 열이 없을때 예외처리
+                  throw new DoNotSelectException();
+               }
+               int reply = JOptionPane.showConfirmDialog(null, "Would delete this event?", "Delete Event",
+                     JOptionPane.YES_NO_OPTION);// 정말 삭제할 것인지 재확인 하는 메세지 출력
+               if (reply == JOptionPane.YES_OPTION) {
+            	   try {
+
+                       FileReader fr = new FileReader("ToDo.txt");
+                       BufferedReader br = new BufferedReader(fr);// 읽기용을 텍스트 파일 열기
+                       String sCurrentLine;//파일의 한줄의 내용일 읽어올 변수
+                       String dummy = ""; // 파일의 내용을 담아올 String 변수 생성
+                       while ((sCurrentLine = br.readLine()) != null) {//파일을 끝까지 읽을때까지 반복
+
+                          String[] Str = sCurrentLine.split("[;]");//구분 문자에 맞게 날짜와 완료 상태, 시간과 사건을 분리하여 담는다. 
+
+                          if (Str[0]
+                                .equals(String.valueOf(cal.Year + "_" + cal.SelectMonth + "_" + cal.SelectDay))
+                                && Str[2].equals(table.getValueAt(table.getSelectedRow(), 1))
+                                && Str[3].equals(table.getValueAt(table.getSelectedRow(), 2))) {
+
+                      // 해당하는 파일의 내용의 해당하는 line을 수정하여 dummy에 저장
+                          } else {
+                             dummy += sCurrentLine + "\n"; // 해당하는 줄을 제외한 나머지 줄을  dummy에 그대로 저장
+                          }
+
+                       }
+
+                       FileWriter fw = new FileWriter("ToDo.txt");
+                       BufferedWriter bw = new BufferedWriter(fw);
+                       bw.write(dummy); // 수정된 내용을 파일에 쓴다.
+                       // 구분기호 ;
+                       // [년도_월_일];완료여부;시간:시간;할일\n
+                       bw.flush();//버퍼를 비운다
+                       bw.close();//버퍼 닫기
+
+                       br.close();
+                    } catch (Exception e1) {
+                       e1.printStackTrace();
+                    }//예외처리
+
+
+                  int row = table.getSelectedRow();
+                  defaultTableModel = (DefaultTableModel) table.getModel();
+                  defaultTableModel.removeRow(row);
+                  timetable[row].setEnabled(false);
+                  timetable[row].setVisible(false);
+               }
+            } catch (DoNotSelectException ee) {
+               JOptionPane.showMessageDialog(null, "select event", "do not be selected",
+                     JOptionPane.ERROR_MESSAGE);
+
+            }//예외처리
+         }
+      });
+      btnDelete.setBounds(44, 64, 90, 40);
+      panel.add(btnDelete);// 삭제버튼을 페널에 넣는다.
+
+      scrollPane_1.setBounds(29, 127, 265, 199);
+      panel.add(scrollPane_1); // 스크롤 패널 생성
+
+      btnSave = new JButton("Save"); // Save 버튼 생성
+      btnSave.addActionListener(new ActionListener() {// ActionLisner
+         public void actionPerformed(ActionEvent e) {	//액션 수행
+            if (table.getValueAt(0, 2).equals(null)) {
+               JOptionPane.showMessageDialog(null, "no data", "no data", JOptionPane.ERROR_MESSAGE); // 에러메세지 출력
+            } else {
+               if (table.getRowCount() == 1) { //low 갯수가 1이면
+                  for (int i = 0; i < 42; i++) {
+                     if (cal.buttemp[i].getText().equals(cal.SelectDay)) {
+                        cal.buttemp[i].setText("<html>" + cal.buttemp[i].getText() + "<br/>"
+                              + table.getValueAt(0, 2) + "</html>");// Calender의 해당 날짜의 버튼에 일정내용을 쓰기
+                        break;
+                     }
+                  }
+
+               } else if (table.getRowCount() > 1) {
+                  for (int i = 0; i < 42; i++) {
+                     if (cal.buttemp[i].getText().equals(cal.SelectDay)) { // Calender 버튼의 날짜와 선택된 날짜가 같으면
+                        cal.buttemp[i].setText("<html>" + cal.buttemp[i].getText() + "<br/>"
+                              + table.getValueAt(0, 2) + "<br/>More...</html>");	// Calender의 해당 날짜의 버튼에 일정내용을 쓰기
+                        JOptionPane.showMessageDialog(null, "Save at Calendar!");	// calecdar에 저장되었다는 확인 메세지 출력
+                        break;
+                     }
+                  }
+               }
+            }
+         }
+      });
+
+      btnSave.setBounds(170, 64, 90, 40);
+      panel.add(btnSave); // Save 버튼을 panel 에 추가
+
+   }
+
+   DefaultTableCellRenderer dcr = new DefaultTableCellRenderer() {// table 내에서 checkbox를 다루는데 사용
+	      public Component getTableCellRendererComponent // 셀렌더러, table내에서 사용자가 원하는 cell에 component를 넣는다.
+	      (JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+	         JCheckBox box = new JCheckBox(); // checkbox 생성
+	         box.setSelected(((Boolean) value).booleanValue());
+	         box.setHorizontalAlignment(JLabel.CENTER);// 가운데 배열
+	         return box;	
+	      }
+	   };
+
+   public class DoNotSelectException extends Exception {
+
+   }
+}
